@@ -1,0 +1,24 @@
+29 Jan 2026
+
+strongly typed: A strongly typed language does NOT allow unsafe type conversions.
+weakly typed:A weakly typed language allows implicit type conversions.
+
+node-typescript
+Download: npm i -g typescript (-g for globally)
+initialise: npx tsc --init
+
+typescript-----build----into javascript----node
+To build:
+tsc-b
+npx tsc -b
+
+Not directly run like node script.js it will not give error and make it plain javascript
+Always build before running
+
+tsconfig file:
+  1. "target": "esnext" ----> es version
+  2. // "rootDir": "./src", -----> typescript code
+  3. // "outDir": "./dist", -----> javascript build files
+
+2 feb 2026
+Difference between interface and type
