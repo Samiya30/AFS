@@ -22,3 +22,7 @@ tsconfig file:
 
 2 feb 2026
 Difference between interface and type
+
+12 feb 2026
+regular and state variable
+react keeps track of state varible but not for regular variable
