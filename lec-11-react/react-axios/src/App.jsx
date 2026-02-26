@@ -1,52 +1,83 @@
-import React, { useState,useEffect } from 'react'
-import axios from 'axios'
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+
 const App = () => {
-  let [users,setUsers]=useState([{id:1,name:"Samiya",email:"sam@gmail.com"},{id:2,name:"Samiya",email:"sam@gmail.com"}])
-  let [count,setCount]=useState(0);
+  const [users, setUsers] = useState([]);
+  const [count, setCount] = useState(0);
+  const [randomNum, setRandomNum] = useState(null);
+  const [result, setResult] = useState("");
 
-  //logic to change the state
-  //send request to server address,get data and change the state value
-
-  async function getUsers(){
-    //url--->https://jsonplaceholder.typicode.com/users
-    //request ---->axios
-    let response=await axios.get("https://jsonplaceholder.typicode.com/users")
-    console.log(response.data)
-    setUsers(response.data)
+  async function getUsers() {
+    const response = await axios.get(
+      "https://jsonplaceholder.typicode.com/users"
+    );
+    setUsers(response.data);
   }
-  //getUsers();
-  useEffect(()=>{
-    getUsers();
-  },[])
 
-  useEffect(()=>{
-    const id=setInterval(()=>{
-      setCount((prev)=>prev+1);   //use callback to get changed previous state and callback guarantee that you will get updated value
-    },1000)
-    //clean up function 
-    return ()=>clearInterval(id);
-  },[])
+  useEffect(() => {
+    getUsers();
+  }, []);
+
+  // count increase after 1 sec
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, []);
+
+  // random number if 7 you win
+  const generateNumber = () => {
+    const num = Math.floor(Math.random() * 10);
+    setRandomNum(num);
+
+    if (num === 7) {
+      setResult("You Won");
+    } else {
+      setResult("You Lost");
+    }
+  };
 
   return (
     <div>
       <h1>Axios</h1>
-      <h1>User list</h1>
-      <ul>
-        {/* <li>user 1</li>
-        <li>user 2</li>
-        <li>user 3</li>
-        <li>user 4</li>
-        <li>user 5</li>
-        <li>user 6</li> */}
-        {
-          users.map((users)=>{
-            return <li>{users.name}</li>
-          })
-        }
-      </ul>
-      <h1>count:{count}</h1>
-    </div>
-  )
-}
 
-export default App
+      <h2>User List</h2>
+      <ul>
+        {users.map((user) => (
+          <li key={user.id}>{user.name}</li>
+        ))}
+      </ul>
+      <h2>Count: {count}</h2>
+
+      <hr />
+
+      <h2>Random Number</h2>
+      <button onClick={generateNumber}>Click</button>
+      {randomNum !== null && ( 
+        <>
+          <h3>Number: {randomNum}</h3>
+          <h2>{result}</h2>
+          {result == "You Won" && (
+            <img
+              src="https://media.giphy.com/media/111ebonMs90YLu/giphy.gif"
+              width="200"
+              alt="win"
+            />
+          )}
+
+          {result == "You Lost" && (
+            <img
+              src="https://media.giphy.com/media/3o6wrvdHFbwBrUFenu/giphy.gif"
+              width="200"
+              alt="loss"
+            />
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+export default App;
