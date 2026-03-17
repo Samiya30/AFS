@@ -1,189 +1,268 @@
 import { ApolloServer } from "@apollo/server";
 import { startStandaloneServer } from "@apollo/server/standalone";
+import jwt from "jsonwebtoken";
+let secretKey = "secret123";
 
+// Dummy Data
 let users = [
-    {
-        id: 1,
-        name: "Samiya",
-        email: "sam@gmail.com",
-        phone: 1234567890
-    },
-    {
-        id: 2,
-        name: "abc",
-        email: "abc.gmail.com",
-        phone: 1234567890
-    },
-    {
-        id:3,
-        name:"xyz",
-        email:"xyz.gmail.com",
-        phone:1234567890
-    }
-]
-
-let blogs=[
   {
-    id:1,
-    title:"Blog-1",
-    description:"My first Blog",
-    date:"12-03-2026",
-    userID:1
+    id: 1,
+    name: "Samiya",
+    email: "sam@gmail.com",
+    password: "123",
+    phone: 1234567890,
   },
   {
-    id:2,
-    title:"Blog-2",
-    description:"My second Blog",
-    date:"13-03-2026",
-    userID:2
-  }
-]
+    id: 2,
+    name: "abc",
+    email: "abc.gmail.com",
+    password: "123",
+    phone: 1234567890,
+  },
+  {
+    id: 3,
+    name: "xyz",
+    email: "xyz.gmail.com",
+    password: "123",
+    phone: 1234567890,
+  },
+];
 
-const typeDefs = `
-#graphql
+let blogs = [
+  {
+    id: 1,
+    title: "Blog-1",
+    description: "My first Blog",
+    date: "12-03-2026",
+    userID: "1",
+  },
+  {
+    id: 2,
+    title: "Blog-2",
+    description: "My second Blog",
+    date: "13-03-2026",
+    userID: "2",
+  },
+  {
+    id: 3,
+    title: "Blog-3",
+    description: "My third Blog",
+    date: "14-03-2026",
+    userID: "3",
+  },
+];
+
+// GraphQL Schema
+const typeDefs = `#graphql
+
+  type addblogresponse{
+  message:String,
+  data:Blog
+  }
+
+  type loginResponse{
+  message:String,
+  token:String
+  }
 
   type User {
     id: ID!
     name: String
     email: String
     phone: Int
-    blog:[Blog]
+    password: String
+    blogs: [Blog]
   }
 
-  type Blog{
-    id:ID!
-    title:String
-    description:String
-    date:String
-    userID:ID!
-    user:User
+  type Blog {
+    id: ID!
+    title: String
+    description: String
+    date: String
+    userID: ID!
+    user: User
   }
 
   type Query {
     getUsers: [User]
-    getOneUser (_id: ID!): User
-    getBlogs:[Blog]
-    getBlogByID(_id:ID!):Blog
+    getOneUser(_id: ID!): User
+    getBlogs: [Blog]
+    getBlogByID(_id: ID!): Blog
   }
 
-  type Mutation{
-    addUser(id: ID!, name: String, email: String, phone: Int):User
-    deleteUser(id: ID!):[User]
-    updateUser(id:ID!,name:String,email:String,phone:Int):User
+  type Mutation {
+    addUser(id: ID!, name: String, email: String, phone: Int): User
+    deleteUser(id: ID!): [User]
+    updateUser(id: ID!, name: String, email: String, phone: Int): User
 
-    addBlog(id:ID!,title:String,description:String,date:String):[Blog]
-    deleteBlog(id:ID!):[Blog]
-    updateBlog(id:ID!,title:String,description:String,date:String):Blog
+    addBlog(id: ID!, title: String, description: String, date: String, userID: ID!): addblogresponse
+    deleteBlog(id: ID!): [Blog]
+    updateBlog(id: ID!, title: String, description: String, date: String): Blog
+    login(email: String, password: String): loginResponse
   }
+
 `;
 
+// Resolvers
 const resolvers = {
   Query: {
     getUsers: () => {
-        return users;
+      return users;
     },
 
-    getOneUser: (_,args)=>{
-        return users.find((u)=>u.id==args._id);
+    getOneUser: (_, args) => {
+      return users.find((u) => u.id == args._id);
     },
 
-    getBlogs:()=>{
-        return blogs;
+    getBlogs: () => {
+      return blogs;
     },
 
-    getBlogByID:(_,args)=>{
-        return blogs.find((b)=>b.id==args._id);
+    getBlogByID: (_, args) => {
+      return blogs.find((b) => b.id == args._id);
+    },
+  },
+
+  Mutation: {
+    login: (parent,args) => {
+      /**
+       * {email, pswd} = args
+       * if email exist?
+       *     No -> please register 
+       *     Yes 
+       *         check pswd
+       *               No -> wrong pswd 
+       *              Yes -> create token and return 
+       */
+      const { email, password } = args;
+      const user = users.find((u) => u.email == email);
+      if(!user) {
+        return {message : "Email does not exist",token:null};
+      }
+      if (user.password !== password) {
+        return {message : "Incorrect password",token:null};
+      }
+      let token = jwt.sign({ id: user.id}, secretKey);
+      return {
+        message : "Login successful",
+        token
+      };
+    },
+
+    // User Mutations
+    addUser: (_, args) => {
+      const { id, name, email, phone } = args;
+
+      const newUser = { id, name, email, phone };
+
+      users.push(newUser);
+
+      return newUser;
+    },
+
+    deleteUser: (_, args) => {
+      const { id } = args;
+
+      users = users.filter((u) => u.id != id);
+
+      return users;
+    },
+
+    updateUser: (_, args) => {
+      const { id, name, email, phone } = args;
+
+      let user = users.find((u) => u.id == id);
+
+      user.name = name;
+      user.email = email;
+      user.phone = phone;
+
+      return user;
+    },
+
+    // Blog Mutations
+    addBlog: (_, args,context) => {
+      let {userID}=context;
+      if(!userID) return {
+        message:context.message,
+        data:null
+      }
+  const { id, title, description, date } = args;
+
+  const newBlog = { id, title, description, date, userID };
+
+  blogs.push(newBlog);
+
+  return {
+    message:"blog added successfully",
+    data:blogs[blogs.length-1]
+  };
+},
+
+    deleteBlog: (_, args) => {
+      const { id } = args;
+
+      blogs = blogs.filter((b) => b.id != id);
+
+      return blogs;
+    },
+
+    updateBlog: (_, args) => {
+      const { id, title, description, date } = args;
+
+      let blog = blogs.find((b) => b.id == id);
+
+      blog.title = title;
+      blog.description = description;
+      blog.date = date;
+
+      return blog;
     }
   },
 
-  Mutation:{
-    addUser:(_,args) => {
-        let {id,name,email,phone}=args;
-
-        let newUser={
-          id:id,
-          name:name,
-          email:email,
-          phone:phone
-        }
-
-        users.push(newUser);
-        return newUser;
-    },
-
-    deleteUser:(_,args)=>{
-       let {id}=args;
-       users=users.filter((u)=>u.id!=id);
-       return users;
-    },
-
-    updateUser:(_,args)=>{
-        let {id,name,email,phone}=args;
-
-        let updateUser=users.find((u)=>u.id==id);
-
-        updateUser.name=name;
-        updateUser.email=email;
-        updateUser.phone=phone;
-
-        return updateUser;
-    },
-
-    addBlog:(_,args)=>{
-        let {id,title,description,date}=args;
-
-        let newBlog={
-          id:id,
-          title:title,
-          description:description,
-          date:date,
-          userID:userID
-        }
-
-        blogs.push(newBlog);
-        return blogs;
-    },
-
-    deleteBlog:(_,args)=>{
-        let {id}=args;
-        blogs=blogs.filter((b)=>b.id!=id);
-        return blogs;
-    },
-
-    updateBlog:(_,args)=>{
-        let {id,title,description,date}=args;
-
-        let updateBlog=blogs.find((b)=>b.id==id);
-
-        updateBlog.title=title;
-        updateBlog.description=description;
-        updateBlog.date=date;
-
-        return updateBlog;
-    }
-  },
-
-  User:{
-    blog:(parent)=>{
-      return blogs.filter((b)=>b.userID==parent.id);
-    }
-  },
-
-  Blog:{
-    user:(parent)=>{
-      return users.find((u)=>u.id==parent.userID);
-    }
+  User : {
+    blogs : (parent, args) => {
+    // parent gets the return value of parent resolver
+    return blogs.filter((b) => b.userID == parent.id);
   }
-
+},
+Blog: {
+  user: (parent) => {
+    return users.find((u) => u.id == parent.userID);
+  }
+}
 };
 
+// Apollo Server
 const server = new ApolloServer({
   typeDefs,
   resolvers,
 });
 
+// Start Server
 const { url } = await startStandaloneServer(server, {
   listen: { port: 4000 },
+  context:({req})=>{
+    let token=req.headers.authorization;
+    if(!token){
+      return{
+      message:"user not logged in",
+      userID:null
+      }
+    }
+    try{
+      let decode=jwt.verify(token,secretKey);
+      if(!decode) return {message:"invalid token",userID:null}
+      return {message:"user logged in",userID:decode.id}
+    }
+    catch(error){
+      console.log(error.message);
+      return {
+        message:"internal server error",
+        userID:null
+      }
+    }
+  }
 });
 
-console.log(` Server ready at: ${url}`);
+console.log(`Server ready at: ${url}`);
