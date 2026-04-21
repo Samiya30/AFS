@@ -71,3 +71,6 @@ jobs:
 
       - name: list file
         run: ls
+
+      - name: node version
+        run: node -v
