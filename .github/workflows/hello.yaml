@@ -10,7 +10,7 @@
 #       - name: Print message
 #         run: echo "Hello, Github Actions!"
 #       - name: Print my name
-#         run: echo "Ridhima Sharma"
+#         run: echo "Samiya Sharma"
 #       - name: bye message
 #         run: echo "Bye, Github Actions!"
 
@@ -29,7 +29,7 @@
 #       - name: Print message
 #         run: echo "Hello, Github Actions!"
 #       - name: Print my name
-#         run: echo "Ridhima Sharma"
+#         run: echo "Samiya Sharma"
 #       - name: bye message
 #         run: echo "Bye, Github Actions!"
 
@@ -74,3 +74,5 @@ jobs:
 
       - name: node version
         run: node -v
+
+
