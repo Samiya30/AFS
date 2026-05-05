@@ -11,7 +11,7 @@ function App() {
     SetUser(currentUser);
   });
 
-  return () => unsubscribe();
+  return () => unsubscribe(); //when function unmounts(clean up function)
 }, []);
   return (
     <div>
